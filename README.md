@@ -69,7 +69,7 @@
 
 **Примеры API endpoints:**
 - `GET /materials/` — список материалов с пагинацией, фильтрацией и поиском
-- `PUT /materials/add — создание нового материала
+- `PUT /materials/add` — создание нового материала
 - `GET /materials/{material_id}` — получение конкретного материала
 - `PATCH /materials/patch` — обновление материала
 
