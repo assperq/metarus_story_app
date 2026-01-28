@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Any
-
+from pydantic import BaseModel
 
 @dataclass
 class PaginatedResponse:
@@ -9,8 +9,7 @@ class PaginatedResponse:
     offset: int
     data: Any
 
-@dataclass
-class Material:
+class Material(BaseModel):
     id: int
     name: str
     type_id: int
@@ -18,6 +17,18 @@ class Material:
     height: float
     image_url: str
     supplier_id: int
+
+    @staticmethod
+    def from_row(row):
+        return Material(
+            id=row[0],
+            name=row[1],
+            type_id=row[2],
+            width=row[3],
+            height=row[4],
+            image_url=row[5],
+            supplier_id=row[6],
+        )
 
 
 @dataclass

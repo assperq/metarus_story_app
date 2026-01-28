@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 import uvicorn
 from fastapi import FastAPI, Body, Query
@@ -38,18 +38,19 @@ async def favicon():
 def types_list():
     cursor.execute("SELECT * FROM types;")
     rows = cursor.fetchall()
-    return MaterialType.from_list(rows)
+    return { "data": MaterialType.from_list(rows) }
 
 @app.get("/suppliers")
 def types_list():
     cursor.execute("SELECT id, name FROM suppliers;")
     rows = cursor.fetchall()
-    return Supplier.from_list(rows)
+    return { "data": Supplier.from_list(rows) }
+
 
 @app.get("/materials")
 def get_materials(
-        type_id: Optional[int] = Query(None, description="ID типа материала"),
-        supplier_id: Optional[int] = Query(None, description="ID поставщика"),
+        type_ids: Optional[List[int]] = Query(None, description="Список ID типов материала"),
+        supplier_ids: Optional[List[int]] = Query(None, description="Список ID поставщиков"),
         name: Optional[str] = Query(None, description="Название материала для поиска"),
         limit: int = Query(20, ge=1, le=100, description="Лимит результатов"),
         offset: int = Query(0, ge=0, description="Смещение для пагинации"),
@@ -57,13 +58,15 @@ def get_materials(
     conditions = []
     params = []
 
-    if type_id is not None:
-        conditions.append("m.type_id = %s")
-        params.append(type_id)
+    if type_ids:
+        placeholders = ", ".join(["%s"] * len(type_ids))
+        conditions.append(f"m.type_id IN ({placeholders})")
+        params.extend(type_ids)
 
-    if supplier_id is not None:
-        conditions.append("s.id = %s")
-        params.append(supplier_id)
+    if supplier_ids:
+        placeholders = ", ".join(["%s"] * len(supplier_ids))
+        conditions.append(f"s.id IN ({placeholders})")
+        params.extend(supplier_ids)
 
     if name is not None:
         conditions.append("m.name ILIKE %s")
@@ -80,9 +83,7 @@ def get_materials(
     rows = cursor.fetchall()
     res = MaterialListItem.from_list(rows)
 
-    total_count = res.__len__()
-
-    return PaginatedResponse(total_count, offset, res)
+    return PaginatedResponse(res.__len__(), offset, res)
 
 @app.get("/materials/{material_id}")
 def one_material(material_id: int):
@@ -107,21 +108,37 @@ def one_material(material_id: int):
     cursor.execute(query, (material_id, ))
     return MaterialFullView.from_row(cursor.fetchone())
 
+@app.get("/materials/simple/{material_id}")
+def one_material(material_id: int):
+    query = """
+        SELECT  id,
+                name,
+                type_id,
+                width,
+                height,
+                image_url,
+                supplier_id
+            FROM materials
+            WHERE id = %s;
+            """
+    cursor.execute(query, (material_id, ))
+    return Material.from_row(cursor.fetchone())
+
 @app.put("/materials/add")
-def material_add(material: Material = Body(embed=True)):
+def material_add(material: Material = Body()):
     cursor.execute("INSERT INTO materials "
                    "(name, type_id, width, height, image_url, supplier_id) "
-                   "VALUES (%s, %s, %s, $s, %s, %s)",
+                   "VALUES (%s, %s, %s, %s, %s, %s)",
                    (material.name, material.type_id, material.width, material.height, material.image_url, material.supplier_id))
     return { "result": cursor.rowcount > 0 }
 
-@app.delete("/materials/delete")
-def delete_material(material_id: int = Body(embed=True)):
+@app.delete("/materials/delete/{material_id}")
+def delete_material(material_id: int):
     cursor.execute("DELETE FROM materials WHERE id = %s", (material_id, ))
     return { "result":  cursor.rowcount > 0 }
 
 @app.patch("/materials/patch")
-def update_material(new_material : Material = Body(embed=True)):
+def update_material(new_material : Material = Body()):
     cursor.execute("UPDATE materials SET name=%s, type_id=%s, width=%s, height=%s, image_url=%s, supplier_id=%s WHERE id = %s",
                    (new_material.name, new_material.type_id, new_material.width, new_material.height, new_material.image_url, new_material.supplier_id, new_material.id))
     return {"result": cursor.rowcount > 0}
