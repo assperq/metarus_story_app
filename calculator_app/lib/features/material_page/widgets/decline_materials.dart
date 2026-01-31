@@ -56,7 +56,7 @@ String declineMaterial(String materialName, int quantity) {
     } else if (lowerWord.endsWith('й')) {
       return '${word.substring(0, word.length - 1)}ев';
     } else {
-      return '$wordов';
+      return '$wordа';
     }
   }
 

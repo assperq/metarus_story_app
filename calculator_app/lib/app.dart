@@ -19,11 +19,6 @@ class _MyAppState extends State<MyApp> {
       title: S.current.calculator_app,
       theme: lightTheme,
       routerConfig: _router.config(),
-      // home: Scaffold(
-      //   body: Center(
-      //     child: Text('Flutter Demo Home Page', style: textTheme.bodySmall),
-      //   ),
-      // ),
     );
   }
 }

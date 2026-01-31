@@ -11,6 +11,7 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -23,14 +24,15 @@ interface MaterialService {
         @Query("type_ids") typeIds: List<Int>?,
         @Query("supplier_ids") supplierIds: List<Int>?,
         @Query("name") query: String?,
-        @Query("offset") offset: Int
+        @Query("offset") offset: Int,
+        @Header("Cache-Control") cacheControl: String = "max-age=300"
     ) : PaginatedResponse<MaterialListModelDto>
 
     @GET("materials/types")
-    suspend fun getAllTypes() : SimpleDataResponse<TypeDtoModel>
+    suspend fun getAllTypes(@Header("Cache-Control") cacheControl: String = "max-age=300") : SimpleDataResponse<TypeDtoModel>
 
     @GET("suppliers")
-    suspend fun getAllSuppliers() : SimpleDataResponse<SupplierDtoModel>
+    suspend fun getAllSuppliers(@Header("Cache-Control") cacheControl: String = "max-age=300") : SimpleDataResponse<SupplierDtoModel>
 
     @GET("materials/simple/{id}")
     suspend fun getSingleMaterial(@Path("id") id: Int) : SimpleMaterialModel
